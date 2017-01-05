@@ -18,7 +18,7 @@ Building Plugins
 You get started with Run transform plugin by building directly from the latest source code::
 
    git clone https://github.com/hydrator/ngram-analytics.git
-   cd run-transform
+   cd ngram-analytics
    mvn clean package
 
 After the build completes, you will have a JAR for each plugin under each
