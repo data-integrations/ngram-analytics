@@ -116,7 +116,7 @@ public class NGramTransform extends SparkCompute<StructuredRecord, StructuredRec
     JavaRDD<Row> nGramRDD = javaSparkContext.parallelize(ngramDataFrame.select(config.outputField)
                                                            .collectAsList());
     //Transform JavaRDD<Row> to JavaRDD<StructuredRecord>
-    JavaRDD<StructuredRecord> output = nGramRDD.map(new Function<Row, StructuredRecord>() {
+    return nGramRDD.map(new Function<Row, StructuredRecord>() {
       @Override
       public StructuredRecord call(Row row) throws Exception {
         StructuredRecord.Builder builder = StructuredRecord.builder(outputSchema);
@@ -128,6 +128,5 @@ public class NGramTransform extends SparkCompute<StructuredRecord, StructuredRec
         return builder.build();
       }
     });
-    return output;
   }
 }
