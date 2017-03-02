@@ -89,7 +89,7 @@
     <junit.version>4.11</junit.version>
     <widgets.dir>widgets</widgets.dir>
     <docs.dir>docs</docs.dir>
-    <app.parents>system:cdap-etl-batch[4.1.0-SNAPSHOT,4.2.0-SNAPSHOT),system:cdap-data-pipeline[4.1.0-SNAPSHOT,4.2.0-SNAPSHOT),system:cdap-data-streams[4.1.0-SNAPSHOT,4.2.0-SNAPSHOT)</app.parents>
+    <app.parents>system:cdap-etl-batch[4.1.0,4.2.0),system:cdap-data-pipeline[4.1.0,4.2.0),system:cdap-data-streams[4.1.0,4.2.0)</app.parents>
     <!-- this is here because project.basedir evaluates to null in the script build step -->
     <main.basedir>${project.basedir}</main.basedir>
   </properties>
@@ -391,7 +391,7 @@
         <version>1.7</version>
         <executions>
           <!-- Create the config file for artifact which can be used to deploy the artifact.
-               Sets the parents field to system:cdap-etl-batch and system:cdap-etl-realtime with whatever
+               Sets the parents field to system:cdap-etl-batch with whatever
                version range is set in the app.parents property.
                also sets a widget and doc property for each file contained in the widgets and docs directories. -->
           <execution>
