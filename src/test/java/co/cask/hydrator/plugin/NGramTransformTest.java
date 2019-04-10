@@ -16,6 +16,8 @@
 
 package co.cask.hydrator.plugin;
 
+import co.cask.cdap.api.artifact.ArtifactRange;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
@@ -30,9 +32,8 @@ import co.cask.cdap.etl.mock.test.HydratorTestBase;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -97,7 +98,7 @@ public class NGramTransformTest extends HydratorTestBase {
     setupBatchArtifacts(DATAPIPELINE_ARTIFACT_ID, DataPipelineApp.class);
     // add artifact for spark plugins
     Set<ArtifactRange> parents = ImmutableSet.of(
-      new ArtifactRange(NamespaceId.DEFAULT, DATAPIPELINE_ARTIFACT_ID.getArtifact(),
+      new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), DATAPIPELINE_ARTIFACT_ID.getArtifact(),
                         new ArtifactVersion(DATAPIPELINE_ARTIFACT_ID.getVersion()), true,
                         new ArtifactVersion(DATAPIPELINE_ARTIFACT_ID.getVersion()), true)
     );
@@ -137,7 +138,7 @@ public class NGramTransformTest extends HydratorTestBase {
     ETLBatchConfig etlConfig = buildETLBatchConfig(mockSource, multiFieldData, "2");
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(DATAPIPELINE_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(APP_NAME);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
     DataSetManager<Table> inputManager = getDataset(mockSource);
     List<StructuredRecord> input = ImmutableList.of(
       StructuredRecord.builder(SOURCE_SCHEMA_MULTIPLE).set(FIELD_TO_BE_TRANSFORMED,
@@ -150,8 +151,7 @@ public class NGramTransformTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, input);
     // manually trigger the pipeline
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     DataSetManager<Table> nGrams = getDataset(multiFieldData);
     List<StructuredRecord> output = MockSink.readOutput(nGrams);
     Set<List> results = new HashSet<>();
@@ -174,7 +174,7 @@ public class NGramTransformTest extends HydratorTestBase {
     ETLBatchConfig etlConfig = buildETLBatchConfig(mockSource, SINGLE_FIELD_DATASET, "3");
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(DATAPIPELINE_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(APP_NAME);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
     DataSetManager<Table> inputManager = getDataset(mockSource);
     List<StructuredRecord> input = ImmutableList.of(
       StructuredRecord.builder(SOURCE_SCHEMA_SINGLE).set(FIELD_TO_BE_TRANSFORMED,
@@ -185,8 +185,7 @@ public class NGramTransformTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, input);
     // manually trigger the pipeline
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     DataSetManager<Table> tokenizedTextSingle = getDataset(SINGLE_FIELD_DATASET);
     List<StructuredRecord> output = MockSink.readOutput(tokenizedTextSingle);
     Set<List> results = new HashSet<>();
@@ -207,14 +206,13 @@ public class NGramTransformTest extends HydratorTestBase {
     ETLBatchConfig etlConfig = buildETLBatchConfig(mockSource, SINGLE_FIELD_DATASET, "3");
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(DATAPIPELINE_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app(APP_NAME);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
     DataSetManager<Table> inputManager = getDataset(mockSource);
     List<StructuredRecord> input = ImmutableList.of(StructuredRecord.builder(SOURCE_SCHEMA_SINGLE)
                                                 .set(FIELD_TO_BE_TRANSFORMED, DATA_TO_BE_TRANSFORMED3).build());
     MockSource.writeInput(inputManager, input);
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
-    workflowManager.waitForFinish(5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForRun(ProgramRunStatus.FAILED, 5, TimeUnit.MINUTES);
     DataSetManager<Table> tokenizedTextSingle = getDataset(SINGLE_FIELD_DATASET);
     List<StructuredRecord> output = MockSink.readOutput(tokenizedTextSingle);
     Assert.assertEquals(0, output.size());
