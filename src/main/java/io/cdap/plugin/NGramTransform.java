@@ -14,24 +14,24 @@
  * the License.
  */
 
-package co.cask.hydrator.plugin;
+package io.cdap.plugin;
 
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Macro;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.etl.api.PipelineConfigurer;
-import co.cask.cdap.etl.api.batch.SparkCompute;
-import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import com.google.common.base.Preconditions;
+import io.cdap.cdap.api.annotation.Description;
+import io.cdap.cdap.api.annotation.Macro;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.PluginConfig;
+import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
+import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.ml.feature.NGram;
-import org.apache.spark.sql.DataFrame;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SQLContext;
@@ -39,6 +39,8 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
+import java.util.List;
 
 /**
  * NGramTransform - SparkCompute to transform input features into n-grams.
@@ -105,14 +107,15 @@ public class NGramTransform extends SparkCompute<StructuredRecord, StructuredRec
     //Transform input i.e JavaRDD<StructuredRecord> to JavaRDD<Row>
     JavaRDD<Row> rowRDD = input.map(new Function<StructuredRecord, Row>() {
       @Override
-      public Row call(StructuredRecord rec) throws Exception {
-        return RowFactory.create(rec.get(config.fieldToBeTransformed));
+      public Row call(StructuredRecord rec) {
+        // In Spark 2, List is no longer a valid type for schema array<type>
+        return RowFactory.create(listToArray(rec.get(config.fieldToBeTransformed)));
       }
     });
-    DataFrame wordDataFrame = sqlContext.createDataFrame(rowRDD, schema);
+    Dataset wordDataFrame = sqlContext.createDataFrame(rowRDD, schema);
     NGram ngramTransformer = new NGram().setN(config.ngramSize)
       .setInputCol(config.fieldToBeTransformed).setOutputCol(config.outputField);
-    DataFrame ngramDataFrame = ngramTransformer.transform(wordDataFrame);
+    Dataset ngramDataFrame = ngramTransformer.transform(wordDataFrame);
     JavaRDD<Row> nGramRDD = javaSparkContext.parallelize(ngramDataFrame.select(config.outputField)
                                                            .collectAsList());
     //Transform JavaRDD<Row> to JavaRDD<StructuredRecord>
@@ -128,5 +131,9 @@ public class NGramTransform extends SparkCompute<StructuredRecord, StructuredRec
         return builder.build();
       }
     });
+  }
+
+  private Object listToArray(Object object) {
+    return object instanceof List ? ((List) object).toArray() : object;
   }
 }
