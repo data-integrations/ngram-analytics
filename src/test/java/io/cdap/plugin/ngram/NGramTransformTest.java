@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.plugin;
+package io.cdap.plugin.ngram;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
