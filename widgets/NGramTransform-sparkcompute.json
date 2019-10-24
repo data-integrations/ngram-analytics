@@ -12,9 +12,12 @@
           "name": "fieldToBeTransformed"
         },
         {
-          "widget-type": "textbox",
+          "widget-type": "number",
           "label": "N-Gram Size",
-          "name": "ngramSize"
+          "name": "ngramSize",
+          "widget-attributes": {
+            "min": "1"
+          }
         },
         {
           "widget-type": "textbox",
