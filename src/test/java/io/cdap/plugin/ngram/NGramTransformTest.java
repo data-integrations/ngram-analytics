@@ -220,7 +220,7 @@ public class NGramTransformTest extends HydratorTestBase {
 
   @Test(expected = IllegalArgumentException.class)
   public void testInCorrectTypeForFieldToBeTransformed() throws Exception {
-    NGramTransform.Config config = new NGramTransform.Config(FIELD_TO_BE_TRANSFORMED, 2, OUTPUT_FIELD);
+    NGramConfig config = new NGramConfig(FIELD_TO_BE_TRANSFORMED, 2, OUTPUT_FIELD);
     MockPipelineConfigurer configurer = new MockPipelineConfigurer(SOURCE_SCHEMA_SINGLE_NEGATIVE_TEST);
     new NGramTransform(config).configurePipeline(configurer);
   }
